@@ -32,8 +32,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalTextInputService
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.ClipEntry
@@ -262,7 +264,7 @@ private fun CodeBlockWithLineNumbersWrapped(
     val lineNumberWidth = remember(displayLines.size) {
         displayLines.size.toString().length
     }
-    SelectionContainer {
+    NoImeSelectionContainer {
         Column {
             displayLines.forEachIndexed { index, line ->
                 Row(
@@ -336,7 +338,7 @@ private fun CodeBlockDefault(
         }
 
         // 代码列
-        SelectionContainer {
+        NoImeSelectionContainer {
             HighlightText(
                 code = displayCode,
                 language = language,
@@ -493,6 +495,23 @@ private fun CodeBlockPreview(
         state = state,
         modifier = modifier.clip(RoundedCornerShape(4.dp)),
     )
+}
+
+/**
+ * 一个不会触发 IME（输入法）的 SelectionContainer。
+ * 在代码块中选中文本时，Compose 默认会激活输入法（软键盘），
+ * 通过将 LocalTextInputService 设为 null 来阻止该行为。
+ */
+@Composable
+private fun NoImeSelectionContainer(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    CompositionLocalProvider(LocalTextInputService provides null) {
+        SelectionContainer(modifier = modifier) {
+            content()
+        }
+    }
 }
 
 private fun buildCodePreviewHtml(code: String, language: String): String {
